@@ -1,0 +1,79 @@
+analyze_topic_task:
+  description: >
+    Analyze the topic "{topic}" and break it down into exactly 3 fixed
+    levels: Beginner, Intermediate, and Advanced. Do not create any other
+    levels or rename these. For each level, list:
+    - A short description of what the learner should achieve at this level
+    - Estimated time to complete (in weeks)
+    - 4 to 8 key concepts the learner needs to master at this level
+    Do not include resources yet — that comes later. Focus only on
+    structure, sequencing, and grouping concepts under the correct level.
+    and make sure to include only the relevant topics for {topic} 
+    for example: if {topic} is agentic ai carefully figure out the 20% for the topics and tasks
+    that drives the 80% of results 
+  expected_output: >
+    A structured JSON object with exactly 3 levels: beginner,
+    intermediate, advanced. Each level has: description, estimated_weeks,
+    and a list of concepts (each concept is just a short string at this
+    stage).
+  agent: analyst
+
+find_resources_task:
+  description: >
+    Using the beginner, intermediate, and advanced levels and their
+    concepts provided, find learning resources for "{topic}". Process one
+    level at a time. For each level: first call the web search tool as
+    many times as needed to gather resources for every concept in that
+    level, then produce ONE structured output covering all concepts in
+    that level together. Do not produce a separate output per concept —
+    batch the output by level so you make exactly 3 structured outputs
+    total across the whole task, one per level. For each concept, include
+    up to 3 resources, each tagged by type (video, article, course,
+    project_idea). Verify resources are relevant and not dead links
+    before including them.
+    and make sure to search for only the resources that are related to the {topic}
+    do not include resources that might not have a quick effect on the learning 
+    for example: for agentic ai only include resources that drives the 80% of results in the field 
+  expected_output: >
+    The same 3-level structure (beginner, intermediate, advanced), with
+    each concept now containing a list of resources. Each resource has:
+    title, url, type, and a one-line note on why it's useful.
+  agent: resource_hunter
+  context:
+    - analyze_topic_task
+
+build_roadmap_task:
+  description: >
+    Take the beginner, intermediate, and advanced levels, their concepts,
+    and their resources, and assemble them into one final structured
+    roadmap for "{topic}". For every concept, add:
+    - A checkbox (incomplete by default)
+    - A difficulty tag (Easy, Medium, or Hard)
+    - A priority tag (Must-do or Optional)
+    Order everything logically within each level. The output should be
+    ready to render directly into a UI or export to PDF/Notion without
+    further editing.
+  expected_output: >
+    A final structured JSON roadmap with exactly 3 levels (beginner,
+    intermediate, advanced), each containing concepts with their
+    resources, checkbox state, difficulty, and priority tags, plus
+    overall level metadata (description, estimated_weeks).
+  agent: roadmap_architect
+  context:
+    - analyze_topic_task
+    - find_resources_task
+
+review_roadmap_task:
+  description: >
+    Review the final roadmap for "{topic}" for logical gaps, wrong
+    ordering, missing resources on any concept, or redundant/duplicate
+    steps. If everything looks correct and complete, approve it as final.
+    If there are issues, list specific, actionable revision notes instead
+    of approving.
+  expected_output: >
+    Either: (1) the original roadmap JSON unchanged with an added
+    "status": "approved" field, or (2) a JSON object with
+    "status": "needs_revision" and a list of specific issues found.
+  agent: quality_reviewer
+  context:
+    - build_roadmap_task
