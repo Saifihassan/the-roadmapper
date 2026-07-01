@@ -2,6 +2,24 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import SerperDevTool
+
+from crewai import Agent, LLM
+import os
+
+llm = LLM(
+    model="mimo-v2.5-free",
+    api_key=os.getenv("NARAROUTER_API_KEY"),
+    base_url=os.getenv("OPENAI_BASE_URL"),
+)
+claude = LLM(
+    model="claude-sonnet-4.5",
+    api_key=os.getenv("NARAROUTER_API_KEY"),
+    base_url=os.getenv("OPENAI_BASE_URL"),
+)
+
+
+
+
 @CrewBase
 class TheRoadmapper():
     """TheRoadmapper crew"""
@@ -21,6 +39,7 @@ class TheRoadmapper():
         return Agent(
             config=self.agents_config['resource_hunter'], # type: ignore[index]
             verbose=True,
+            llm=llm,
             tools=[SerperDevTool()]
         )
 
@@ -28,6 +47,7 @@ class TheRoadmapper():
     def roadmap_architect(self) -> Agent:
         return Agent(
             config=self.agents_config['roadmap_architect'], # type: ignore[index]
+            llm=llm
         )
 
     @agent

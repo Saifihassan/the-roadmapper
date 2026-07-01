@@ -14,7 +14,8 @@ def run():
     Run the crew.
     """
     inputs = {
-        'topic': 'Agentic AI development'
+        'topic': 'Cold sales outreach',
+        'search_budget':6
     }
 
     try:
