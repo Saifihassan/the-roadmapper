@@ -3,20 +3,26 @@ analyze_topic_task:
     Analyze "{topic}" and create a practical learning roadmap with exactly
     three levels: Beginner, Intermediate, and Advanced.
 
+    MANDATORY FIRST STEP — YOU MUST SEARCH BEFORE DOING ANYTHING ELSE:
+    - Search for "{topic} learning roadmap 2026" or similar query first.
+    - If the results don't cover all three levels well, do one follow-up
+      search (e.g. "{topic} beginner to advanced curriculum").
+    - Do a third search only if a specific level still lacks coverage.
+    - Maximum 3 searches total. Stop searching after 3 regardless.
+    - Use what you find to inform your roadmap — do not ignore search results.
+
     STRICT RULES:
-    - Include only concepts that are directly relevant to becoming
-      practically proficient in {topic}.
+    - Include only concepts directly relevant to becoming practically
+      proficient in {topic}.
     - Exclude academic, historical, theoretical, or low-impact topics
-      unless they are essential prerequisites for understanding or
-      applying {topic}.
+      unless they are essential prerequisites.
     - Prioritize concepts, tools, frameworks, techniques, and workflows
-      that are commonly used in real-world practice.
-    - Follow the Pareto Principle: focus on the 20% of concepts that
-      provide 80% of the practical value.
-    - Organize concepts in a logical learning sequence where each level
-      naturally builds on the previous one.
-    - Do not overwhelm the learner with exhaustive coverage. Prefer
-      depth in essential concepts over breadth.
+      used in real-world practice.
+    - Follow the Pareto Principle: 20% of concepts that give 80% of
+      practical value.
+    - Organize concepts in logical learning sequence where each level
+      builds on the previous.
+    - Prefer depth in essential concepts over breadth.
 
     For each level provide:
     - A short learning objective
@@ -26,57 +32,80 @@ analyze_topic_task:
     Do not include learning resources.
 
   expected_output: >
-    JSON with exactly three keys:
-    beginner,
-    intermediate,
-    advanced.
-
-    Each level contains:
-    - description
-    - estimated_weeks
-    - concepts (list of strings)
+    JSON with exactly three keys: beginner, intermediate, advanced.
+    Each level contains: description, estimated_weeks, concepts (list of strings).
 
   agent: analyst
 
+  # expected_output: >
+  #   JSON with exactly three keys:
+  #   beginner,
+  #   intermediate,
+  #   advanced.
+
+  #   Each level contains:
+  #   - description
+  #   - estimated_weeks
+  #   - concepts (list of strings)
+
+  # agent: analyst
+
+
+query_generation_task:
+  description: >
+    Using the roadmap output, generate the smallest possible set of search
+    queries that still covers every concept across all three levels.
+
+    STRICT RULES:
+    - Maximum 6 queries total across all levels.
+    - Combine related concepts from the same level into one broad query.
+    - Only generate a separate query if a concept is genuinely unrelated
+      to anything else in its level.
+    - Each query must be specific enough to return practical tutorials,
+      documentation, or courses — not just definitions.
+    - Format each query to include the topic name and resource type hints
+      (e.g. "tutorial", "course", "documentation", "guide").
+
+    Target:
+    - Beginner: 1-2 queries max
+    - Intermediate: 1-2 queries max
+    - Advanced: 1-2 queries max
+
+  expected_output: >
+    A JSON object with keys: beginner, intermediate, advanced.
+    Each key maps to a list of 1-2 search query strings.
+    Maximum 6 queries total.
+
+  agent: query_generator
+  context:
+    - analyze_topic_task
 
 find_resources_task:
   description: >
-    Using the roadmap created previously, find high-quality learning
-    resources for every concept.
+    You have been given a pre-approved list of search queries.
+    Use ONLY these queries to search the web — do not generate,
+    modify, or add any new queries under any circumstances.
 
-    STRICT SEARCH RULES:
-    - Maximum search budget: {search_budget}
-    - Use ONE broad search per level covering all concepts together.
-    - Only do a follow-up search if a concept has zero usable results
-      from the first pass — not just to find better results.
-    - Never search per concept individually.
-    - Reuse results across related concepts wherever possible.
+    STRICT RULES:
+    - Execute each provided query exactly once using the search tool.
+    - Do not search beyond the provided query list.
+    - From the results, assign the most relevant resources to each concept.
+    - One resource can cover multiple related concepts if relevant.
+    - For every concept provide up to 3 resources.
 
-    Suggested strategy:
-    - Beginner: 1 search (2 max)
-    - Intermediate: 1 search (2 max)
-    - Advanced: 1 search (2 max)
-
-    For every concept provide up to 3 resources.
-
-    Resource types:
-    - video
-    - article
-    - course
-    - documentation
-    - project
+    Resource types: video, article, course, documentation, project
 
     Selection rules:
     - Only include resources directly related to {topic}.
     - Prefer official documentation whenever available.
     - Prefer modern, practical resources over theoretical ones.
-    - Avoid duplicate resources across concepts unless absolutely necessary.
 
     Before finishing, verify every concept has at least one resource.
-    If any concept is missing, do one targeted search before submitting.
+    If a concept is missing, use the closest existing search result —
+    do NOT run a new search.
 
   expected_output: >
-    Same roadmap structure with every concept containing:
+    A roadmap structure with every concept containing:
     - title
     - url
     - type
@@ -84,13 +113,16 @@ find_resources_task:
 
   context:
     - analyze_topic_task
+    - query_generation_task
 
   agent: resource_hunter
 
 
 build_roadmap_task:
   description: >
-    Combine the analyzed roadmap with gathered resources into one final roadmap.
+    Carefully analyze the roadmap generated with gathered resources
+    check if all the concepts are arranged in a logical order if not
+    then correct the order
 
     For every concept add:
     - completed: false
@@ -101,14 +133,19 @@ build_roadmap_task:
     Output must be ready for rendering in a web app or exporting to
     PDF/Notion without additional formatting.
 
+    If revision_notes are provided below, fix every issue mentioned before
+    building the roadmap. Do not repeat the same mistakes.
+    Revision notes: {revision_notes}  
+
+
   expected_output: >
     Final JSON with keys: beginner, intermediate, advanced.
     Every concept contains: name, resources, completed, difficulty, priority.
 
   context:
     - analyze_topic_task
+    - query_generation_task
     - find_resources_task
-
   agent: roadmap_architect
 
 

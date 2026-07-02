@@ -2,20 +2,53 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import SerperDevTool
+from pydantic import BaseModel,Field
 
 from crewai import Agent, LLM
 import os
 
-llm = LLM(
-    model="mimo-v2.5-free",
-    api_key=os.getenv("NARAROUTER_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL"),
+
+# class SearchQuery(BaseModel):
+#     """the search query"""
+#     searchQuery:str 
+#     Field(description="this is the search query that will be used to search the web")
+# class searchQueryList(BaseModel):
+#     """the list of search queries"""
+#     searchList= list[SearchQuery]
+
+gpt4o = LLM(                                    # analyze
+    model="gpt-4o",
+    api_key=os.getenv("BLUESMIND_API_KEY"),
+    base_url=os.getenv("BLUESMIND_BASE_URL"),
 )
-claude = LLM(
+glm = LLM(                                      # roadmap architect
+    model="glm-4.6",
+    api_key=os.getenv("BLUESMIND_API_KEY"),
+    base_url=os.getenv("BLUESMIND_BASE_URL"),
+)
+claude = LLM(                                   # this will search the web
     model="claude-sonnet-4.5",
-    api_key=os.getenv("NARAROUTER_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL"),
+    api_key=os.getenv("NARAROUTER_API_KEY"),    
+    base_url=os.getenv("NARAROUTER_BASE_URL"),
 )
+claude_haiku = LLM(                                   # this will review the quality 
+    model="claude-haiku-4.5",
+    api_key=os.getenv("NARAROUTER_API_KEY"),    
+    base_url=os.getenv("NARAROUTER_BASE_URL"),
+)
+mistral = LLM(                                  #query generator
+    model="mistral-large",
+    api_key=os.getenv("NARAROUTER_API_KEY"),
+    base_url=os.getenv("NARAROUTER_BASE_URL"),
+)
+
+minimax = LLM(                                  #query generator
+    model="minimax-m2.7",
+    api_key=os.getenv("GENERALCOMPUTE_API_KEY"),
+    base_url=os.getenv("GENERALCOMPUTE_BASE_URL"),
+)
+
+
 
 
 
@@ -31,15 +64,23 @@ class TheRoadmapper():
     def analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['analyst'], # type: ignore[index]
-            verbose=True
+            verbose=True,
+            llm=minimax,
+            tools=[SerperDevTool()]
         )
-
+    @agent
+    def query_generator(self)-> Agent:
+        return Agent(
+            config=self.agents_config['query_generator'],
+            llm=minimax
+            # output_pydantic=searchQueryList
+        )
     @agent
     def resource_hunter(self) -> Agent:
         return Agent(
             config=self.agents_config['resource_hunter'], # type: ignore[index]
             verbose=True,
-            llm=llm,
+            llm=minimax,
             tools=[SerperDevTool()]
         )
 
@@ -47,13 +88,15 @@ class TheRoadmapper():
     def roadmap_architect(self) -> Agent:
         return Agent(
             config=self.agents_config['roadmap_architect'], # type: ignore[index]
-            llm=llm
+            llm=minimax
         )
 
     @agent
     def quality_reviewer(self) -> Agent:
         return Agent(
             config=self.agents_config['quality_reviewer'], # type: ignore[index]
+            llm=minimax
+            
         )
     
     @task
@@ -61,6 +104,12 @@ class TheRoadmapper():
         return Task(
             config=self.tasks_config['analyze_topic_task']
         )
+    @task
+    def query_generation_task(self)->Task:
+        return Task(
+            config=self.tasks_config['query_generation_task']
+        )
+
     
     @task
     def find_resources_task(self)->Task:
