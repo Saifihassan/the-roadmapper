@@ -72,7 +72,8 @@ class TheRoadmapper():
     def query_generator(self)-> Agent:
         return Agent(
             config=self.agents_config['query_generator'],
-            llm=minimax
+            llm=minimax,
+            verbose=True
             # output_pydantic=searchQueryList
         )
     @agent
@@ -88,14 +89,16 @@ class TheRoadmapper():
     def roadmap_architect(self) -> Agent:
         return Agent(
             config=self.agents_config['roadmap_architect'], # type: ignore[index]
-            llm=minimax
+            llm=minimax,
+            verbose=True
         )
 
     @agent
     def quality_reviewer(self) -> Agent:
         return Agent(
             config=self.agents_config['quality_reviewer'], # type: ignore[index]
-            llm=minimax
+            llm=minimax,
+            verbose=True
             
         )
     
@@ -129,11 +132,21 @@ class TheRoadmapper():
             config=self.tasks_config['review_roadmap_task']
         )
     @crew
-    def crew(self) -> Crew:
-        """Creates the TheRoadmapper crew"""
+    def research_crew(self) -> Crew:
+        """Create the research crew"""
         return Crew(
-            agents=self.agents,
-            tasks=self.tasks,
+            agents=[self.analyst(),self.query_generator(),self.resource_hunter()],
+            tasks=[self.analyze_topic_task(),self.query_generation_task(),self.find_resources_task()],
             process=Process.sequential,
             verbose=True,
+        )
+
+    @crew
+    def assembly_crew(self)->Crew:
+        """Creates the assembly crew"""
+        return Crew(
+            agents=[self.roadmap_architect(),self.quality_reviewer()],
+            tasks=[self.build_roadmap_task(),self.review_roadmap_task()],
+            process=Process.sequential,
+            verbose=True
         )

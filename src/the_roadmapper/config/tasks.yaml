@@ -120,9 +120,12 @@ find_resources_task:
 
 build_roadmap_task:
   description: >
-    Carefully analyze the roadmap generated with gathered resources
-    check if all the concepts are arranged in a logical order if not
-    then correct the order
+    Using ONLY the analysis_output and resources_output provided,
+    assemble the final roadmap.
+
+    Arrange all concepts in the most logical learning order.
+    Do not invent concepts or resources that are not present in the
+    provided inputs.
 
     For every concept add:
     - completed: false
@@ -133,19 +136,16 @@ build_roadmap_task:
     Output must be ready for rendering in a web app or exporting to
     PDF/Notion without additional formatting.
 
-    If revision_notes are provided below, fix every issue mentioned before
-    building the roadmap. Do not repeat the same mistakes.
-    Revision notes: {revision_notes}  
+    Use this analysis: {analysis_output}
+    Use these resources: {resources_output}
+    If revision notes exist, fix them: {revision_notes}
 
 
   expected_output: >
     Final JSON with keys: beginner, intermediate, advanced.
     Every concept contains: name, resources, completed, difficulty, priority.
 
-  context:
-    - analyze_topic_task
-    - query_generation_task
-    - find_resources_task
+
   agent: roadmap_architect
 
 
@@ -164,11 +164,31 @@ review_roadmap_task:
     Approve if everything is satisfactory, otherwise return revision notes.
 
   expected_output: >
-    Either:
-    { "status": "approved", "roadmap": {...} }
-    or:
-    { "status": "needs_revision", "issues": [] }
+    Return ONLY one of the following JSON objects.
 
+    If the roadmap satisfies all review criteria:
+
+    {
+      "status": "approved"
+    }
+
+    Otherwise return:
+
+    {
+      "status": "needs_revision",
+      "issues": [
+        {
+          "type": "<issue_type>",
+          "description": "<what needs to be fixed>"
+        }
+      ]
+    }
+
+    Return raw JSON only.
+
+    Do not wrap the response in markdown.
+
+    Do not use ```json.
   context:
     - build_roadmap_task
 
