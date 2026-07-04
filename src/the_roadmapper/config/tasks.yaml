@@ -90,7 +90,6 @@ find_resources_task:
     - Execute each provided query exactly once using the search tool.
     - Do not search beyond the provided query list.
     - From the results, assign the most relevant resources to each concept.
-    - One resource can cover multiple related concepts if relevant.
     - For every concept provide up to 3 resources.
 
     Resource types: video, article, course, documentation, project
@@ -102,7 +101,8 @@ find_resources_task:
 
     Before finishing, verify every concept has at least one resource.
     If a concept is missing, use the closest existing search result —
-    do NOT run a new search.
+    do NOT run a new search. If your get {revision_notes} fix only duplicate_resources, missing_resources
+    do NOT touch any other type of issue just fix the issue that I've suggested
 
   expected_output: >
     A roadmap structure with every concept containing:
@@ -138,7 +138,7 @@ build_roadmap_task:
 
     Use this analysis: {analysis_output}
     Use these resources: {resources_output}
-    If revision notes exist, fix them: {revision_notes}
+    If revision notes exist, fix only issues related to incorrect ordering and incorrect difficulty and incorrect priority or any type of logical error that doesn't require you to search the internet don't try to resolve the missing resources or duplicate resources: {revision_notes}
 
 
   expected_output: >
@@ -157,7 +157,7 @@ review_roadmap_task:
     - logical ordering
     - missing prerequisites
     - missing resources
-    - duplicate concepts or resources
+    - duplicate concepts or resources(you can accept duplicate resources if one resource can be used through out other levels also)
     - incorrect difficulty labels
     - incorrect priorities
 
@@ -166,30 +166,111 @@ review_roadmap_task:
   expected_output: >
     Return ONLY one of the following JSON objects.
 
-    If the roadmap satisfies all review criteria:
+    If the roadmap satisfies all review criteria, return EXACTLY:
 
     {
       "status": "approved"
     }
 
-    Otherwise return:
+    Otherwise return EXACTLY:
 
     {
       "status": "needs_revision",
       "issues": [
         {
-          "type": "<issue_type>",
+          "type": "<one of: missing_concepts, missing_resources, duplicate_resources, incorrect_order, incorrect_difficulty, incorrect_priority, formatting, invalid_json>",
           "description": "<what needs to be fixed>"
         }
       ]
     }
+
+    You are ONLY a reviewer.
+
+    Never rewrite, regenerate, or improve the roadmap yourself.
+
+    Your responsibility is ONLY to review the roadmap produced by the previous task, identify any issues, and return the appropriate JSON object.
 
     Return raw JSON only.
 
     Do not wrap the response in markdown.
 
     Do not use ```json.
+
   context:
     - build_roadmap_task
+
+  agent: quality_reviewer
+
+
+edit_roadmap_task:
+  description: >
+    You are given an existing roadmap_output and reviewer revision notes.
+
+    Your job is to modify the existing roadmap, not recreate it.
+    Preserve every part that is already correct.
+    Only fix the issues listed in {revision_notes}.
+
+    STRICT RULES:
+    - Never regenerate the roadmap from scratch.
+    - Never replace correct sections just to restyle them.
+    - Only change what is necessary to address the reviewer issues.
+    - Use web search only when a fix requires new or replacement resources.
+    - If no web search is needed, do not search.
+
+    Use this topic: {topic}
+    Use this existing roadmap: {roadmap_output}
+    Use these reviewer notes: {revision_notes}
+
+  expected_output: >
+    Final JSON with keys: beginner, intermediate, advanced.
+    The output must be the revised version of the existing roadmap, with only
+    the reviewer issues fixed.
+
+  agent: roadmap_editor
+
+
+review_revision_task:
+  description: >
+    Review the roadmap that was just edited.
+
+    Verify:
+    - logical ordering
+    - missing prerequisites
+    - missing resources
+    - duplicate concepts or resources
+    - incorrect difficulty labels
+    - incorrect priorities
+
+    Approve if everything is satisfactory, otherwise return revision notes.
+
+    Review this roadmap: {roadmap_output}
+    Previous reviewer notes, if any: {revision_notes}
+
+  expected_output: >
+    Return ONLY one of the following JSON objects.
+
+    If the roadmap satisfies all review criteria, return EXACTLY:
+
+    {
+      "status": "approved"
+    }
+
+    Otherwise return EXACTLY:
+
+    {
+      "status": "needs_revision",
+      "issues": [
+        {
+          "type": "<one of: missing_concepts, missing_resources, duplicate_resources, incorrect_order, incorrect_difficulty, incorrect_priority, formatting, invalid_json>",
+          "description": "<what needs to be fixed>"
+        }
+      ]
+    }
+
+    You are ONLY a reviewer.
+    Never rewrite, regenerate, or improve the roadmap yourself.
+    Return raw JSON only.
+    Do not wrap the response in markdown.
+    Do not use ```json.
 
   agent: quality_reviewer

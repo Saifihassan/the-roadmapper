@@ -101,6 +101,15 @@ class TheRoadmapper():
             verbose=True
             
         )
+
+    @agent
+    def roadmap_editor(self) -> Agent:
+        return Agent(
+            config=self.agents_config['roadmap_editor'], # type: ignore[index]
+            llm=minimax,
+            verbose=True,
+            tools=[SerperDevTool()]
+        )
     
     @task
     def analyze_topic_task(self)->Task:
@@ -131,6 +140,19 @@ class TheRoadmapper():
         return Task(
             config=self.tasks_config['review_roadmap_task']
         )
+
+    @task
+    def edit_roadmap_task(self)->Task:
+        return Task(
+            config=self.tasks_config['edit_roadmap_task']
+        )
+
+    @task
+    def review_revision_task(self)->Task:
+        return Task(
+            config=self.tasks_config['review_revision_task']
+        )
+    
     @crew
     def research_crew(self) -> Crew:
         """Create the research crew"""
@@ -149,4 +171,24 @@ class TheRoadmapper():
             tasks=[self.build_roadmap_task(),self.review_roadmap_task()],
             process=Process.sequential,
             verbose=True
+        )
+
+    @crew
+    def editor_crew(self) -> Crew:
+        """Create the roadmap editor crew"""
+        return Crew(
+            agents=[self.roadmap_editor()],
+            tasks=[self.edit_roadmap_task()],
+            process=Process.sequential,
+            verbose=True,
+        )
+
+    @crew
+    def review_crew(self) -> Crew:
+        """Create the reviewer crew used after edits"""
+        return Crew(
+            agents=[self.quality_reviewer()],
+            tasks=[self.review_revision_task()],
+            process=Process.sequential,
+            verbose=True,
         )

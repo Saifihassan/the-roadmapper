@@ -11,5 +11,5 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 def run():
     flow= RoadmapFlow()
-    flow.state.topic="video editing"
+    flow.state.topic="I want to learn frontend development "
     flow.kickoff()

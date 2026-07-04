@@ -11,16 +11,32 @@ class RoadmapState(BaseModel):
     resources_output: str = ""
 
     roadmap_output: str = ""
-
     review_output: str = ""
 
     revision_notes: str = ""
 
     revision_count: int = 0
-    max_revisions: int = 3
+    max_revisions: int = 4
 
 
 class RoadmapFlow(Flow[RoadmapState]):
+
+    
+
+    def _research(self):
+        crew = TheRoadmapper().research_crew()
+
+        crew.kickoff(
+            inputs={
+                "topic": self.state.topic,
+                "revision_notes": self.state.revision_notes
+                
+            }
+        )
+
+        self.state.analysis_output = crew.tasks[0].output.raw
+        self.state.resources_output = crew.tasks[2].output.raw
+
 
     def _assembly(self):
         crew = TheRoadmapper().assembly_crew()
@@ -37,32 +53,46 @@ class RoadmapFlow(Flow[RoadmapState]):
         self.state.roadmap_output = crew.tasks[0].output.raw
         self.state.review_output = crew.tasks[1].output.raw
 
-    @start()
-    def run_research(self):
 
-        crew = TheRoadmapper().research_crew()
+    def _edit(self):
+        crew = TheRoadmapper().editor_crew()
 
         crew.kickoff(
             inputs={
-                "topic": self.state.topic
+                "topic": self.state.topic,
+                "roadmap_output": self.state.roadmap_output,
+                "revision_notes": self.state.revision_notes,
             }
         )
 
-        self.state.analysis_output = crew.tasks[0].output.raw
-        self.state.resources_output = crew.tasks[2].output.raw
+        self.state.roadmap_output = crew.tasks[0].output.raw
 
 
-    
+    def _review_revision(self):
+        crew = TheRoadmapper().review_crew()
+
+        crew.kickoff(
+            inputs={
+                "topic": self.state.topic,
+                "roadmap_output": self.state.roadmap_output,
+                "revision_notes": self.state.revision_notes,
+            }
+        )
+
+        self.state.review_output = crew.tasks[0].output.raw
+
+
+    @start()
+    def run_research(self):
+        self._research()
+
+
     @listen(run_research)
     def run_assembly(self):
         self._assembly()
 
 
-    @listen("revise")
-    def revise_assembly(self):
-        self._assembly()
-
-    
+   
     @router(run_assembly)
     def check_review(self):
 
@@ -76,40 +106,51 @@ class RoadmapFlow(Flow[RoadmapState]):
         status = review.get("status")
 
         if status == "approved":
+            self.state.revision_notes = json.dumps([], indent=2)
             return "approved"
 
         if status == "needs_revision":
-
-            self.state.revision_count += 1
-
-            if self.state.revision_count >= self.state.max_revisions:
-                return "failed"
-
             self.state.revision_notes = json.dumps(
                 review.get("issues", []),
                 indent=2
             )
 
-            return "revise"
+            self.state.revision_count += 1
+
+            if self.state.revision_count > self.state.max_revisions:
+                return "failed"
+
+            return "needs_revision"
 
         return "failed"
-    @listen("revise")
-    def revise_assembly(self):
-        self._assembly()
-        # manually re-route
-        route = self.check_review()
-        if route == "approved":
-            self.finish()
-        elif route == "failed":
-            self.failed_execution()
-        elif route == "revise":
-            self.revise_assembly()
 
+
+    @listen("needs_revision")
+    def rerun_editor(self):
+
+        while True:
+
+            self._edit()
+            self._review_revision()
+
+            route = self.check_review()
+
+            if route == "approved":
+                self.finish()
+                break
+
+            elif route == "failed":
+                self.failed_execution()
+                break
+
+            # if route == "needs_revision"
+            # continue loop
+
+           
     @listen("approved")
     def finish(self):
 
         print("\n========== ROADMAP APPROVED ==========\n")
-
         print(self.state.roadmap_output)
 
 
@@ -117,9 +158,7 @@ class RoadmapFlow(Flow[RoadmapState]):
     def failed_execution(self):
 
         print("\n========== FLOW FAILED ==========\n")
-
         print(f"Revision Attempts : {self.state.revision_count}")
 
         print("\nReviewer Output:\n")
-
         print(self.state.review_output)

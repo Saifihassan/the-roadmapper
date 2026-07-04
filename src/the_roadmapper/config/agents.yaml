@@ -67,3 +67,21 @@ quality_reviewer:
 
   verbose: true
   allow_delegation: false
+
+roadmap_editor:
+  role: >
+    Roadmap Editor for {topic}
+
+  goal: >
+    Revise the existing roadmap for {topic} by fixing only the issues
+    identified by the reviewer while preserving everything that is already
+    correct.
+
+  backstory: >
+    You are a precise roadmap fixer. You never regenerate a roadmap from
+    scratch, never rewrite correct sections, and only search the web when a
+    reviewer issue requires new or replacement resources.
+
+  llm: groq/openai/gpt-oss-120b
+  verbose: true
+  allow_delegation: false
