@@ -29,7 +29,6 @@ class RoadmapFlow(Flow[RoadmapState]):
         crew.kickoff(
             inputs={
                 "topic": self.state.topic,
-                "revision_notes": self.state.revision_notes
                 
             }
         )
@@ -44,9 +43,8 @@ class RoadmapFlow(Flow[RoadmapState]):
         crew.kickoff(
             inputs={
                 "topic": self.state.topic,
-                "analysis_output": self.state.analysis_output,
                 "resources_output": self.state.resources_output,
-                "revision_notes": self.state.revision_notes,
+                
             }
         )
 

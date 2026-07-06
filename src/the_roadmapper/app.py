@@ -2,6 +2,7 @@ import streamlit as st
 from the_roadmapper.flow import RoadmapFlow
 import json
 
+
 def strip_code_fences(text: str) -> str:
     cleaned = text.strip()
 
@@ -14,8 +15,10 @@ def strip_code_fences(text: str) -> str:
     return cleaned
 
 
-def set_topic_from_button(value: str) -> None:
-    st.session_state.topic = value
+def set_topic():
+    st.session_state.topic = st.session_state.suggestion
+
+
 
 Generation_text = [
     "Getting started",
@@ -24,97 +27,67 @@ Generation_text = [
     "Building roadmap",
     "Adding final touches",
 ]
-st.set_page_config(
-    page_title="The Roadmapper",
-    page_icon="📖",
-    layout="wide"
-)
-
-st.title("The RoadMapper")
-st.caption("Generate structured learning roadmaps powered by AI")
-st.divider()
+st.set_page_config(page_title="The Roadmapper", page_icon="📖", layout="wide")
 
 
-topic = st.text_input(
+
+if "selected_topic" not in st.session_state:
+        st.session_state.selected_topic = ""
+with st.sidebar:
+    st.title("The RoadMapper")
+    st.caption("Generate structured learning roadmaps powered by AI")
+    st.divider()
+    topic = st.text_input(
     "Topic",
-    key="topic",
-    placeholder="e.g Cold Email Outreach"
+    value=st.session_state.selected_topic,
+    placeholder="e.g Cold Email Outreach..."
 )
-col1, col2, col3 = st.columns(3)
+    generate = st.button("Generate Roadmap", use_container_width=True)
+    st.markdown("### 🔥 Popular Topics")
+    # st.caption("Popular searches.")
+    popular_topics = [
+    "Frontend Development",
+    "Backend Development",
+    "Fullstack Development",
+    "App Development",
+    "Video Editing",
+    ]
+    for item in popular_topics:
+        if st.button(
+            f"🔍 {item}",
+            use_container_width=True,
+            key=f"topic_{item}"
+        ):
+            st.session_state.selected_topic = item
+            st.rerun()
 
-with col1:
-    st.button(
-        "Video Editing",
-        use_container_width=True,
-        on_click=set_topic_from_button,
-        args=("Video Editing",),
-    )
+
     
-with col2:
-    st.button(
-        "App Development",
-        use_container_width=True,
-        on_click=set_topic_from_button,
-        args=("App Development",),
-    )
 
-with col3:
-    st.button(
-        "Fullstack development",
-        use_container_width=True,
-        on_click=set_topic_from_button,
-        args=("Fullstack development",),
+st.subheader("📚 Generated Roadmap")
+if not generate:
+    st.info(
+        "Your personalized roadmap will appear here.\n\n"
+        "Choose a topic on the left and click **Generate Roadmap**."
     )
-
-col4,col5=st.columns(2)
-with col4:
-    st.button(
-        "Frontend Development",
-        use_container_width=True,
-        on_click=set_topic_from_button,
-        args=("Frontend Development",),
-    )
-with col5:
-    st.button(
-        "Backend Development",
-        use_container_width=True,
-        on_click=set_topic_from_button,
-        args=("Backend Development",),
-    )
-generate = st.button(
-    "Generate Roadmap",
-    use_container_width=True
-)
-
 if generate:
-    flow=RoadmapFlow()
-    flow.state.topic=topic
-
+    flow = RoadmapFlow()
+    flow.state.topic = topic
     with st.spinner("Generating roadmap..."):
         flow.kickoff()
-    roadmap= json.loads(strip_code_fences(flow.state.roadmap_output))
-
-
+    roadmap = json.loads(strip_code_fences(flow.state.roadmap_output))
     for level in ["beginner", "intermediate", "advanced"]:
-
         with st.expander(level.title(), expanded=True):
-
             st.write(roadmap[level]["description"])
             st.write(f"Estimated Weeks: {roadmap[level]['estimated_weeks']}")
-
             st.divider()
-
             for concept in roadmap[level]["concepts"]:
-
                 st.subheader(concept["name"])
-
                 st.write(f"Difficulty: {concept['difficulty']}")
                 st.write(f"Priority: {concept['priority']}")
-
                 for resource in concept["resources"]:
                     st.markdown(
                         f"- [{resource['title']}]({resource['url']}) "
                         f"({resource['type']})"
                     )
-
                 st.divider()
