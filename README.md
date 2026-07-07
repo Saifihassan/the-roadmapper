@@ -1,54 +1,176 @@
-# TheRoadmapper Crew
+# 🚀 The RoadMapper
 
-Welcome to the TheRoadmapper Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+The RoadMapper is an AI-powered application that generates structured learning roadmaps for virtually any topic. It researches the web, curates high-quality learning resources, organizes concepts into progressive learning stages, and delivers a complete roadmap that can be exported in multiple formats.
+
+Whether you're learning web development, video editing, cybersecurity, digital marketing, or any other skill, The RoadMapper provides a clear path from beginner to advanced.
+
+---
+
+## Features
+
+- AI-generated learning roadmaps
+- Beginner, Intermediate, and Advanced learning stages
+- Structured concepts ordered by difficulty
+- Estimated learning duration for each stage
+- Curated learning resources including:
+  - Documentation
+  - Video tutorials
+  - Courses
+  - Articles
+  - Books
+- Automatic roadmap review and refinement
+- Markdown export
+- PDF export
+- Notion-compatible export
+- Modern Streamlit interface
+
+---
+
+## How It Works
+
+1. Enter any learning topic.
+2. The research agent gathers relevant information and learning resources.
+3. The roadmap generation agent creates a structured learning path.
+4. A review agent validates and improves the roadmap.
+5. The final roadmap is displayed and can be exported in multiple formats.
+
+---
+
+## Tech Stack
+
+### Frontend
+
+- Streamlit
+
+### AI Framework
+
+- CrewAI
+
+### Language Models
+
+- OpenRouter
+- Gemini
+- Groq
+- SambaNova
+- BluesMinds
+- GeneralCompute
+- Nara Router
+
+### Search
+
+- Serper API
+- Tavily API
+
+### Backend
+
+- Python
+- Pydantic
+
+### Export
+
+- Markdown
+- PDF (ReportLab)
+- Notion-compatible Markdown
+
+---
+
+## Project Structure
+
+```
+src/
+└── the_roadmapper/
+    ├── app.py
+    ├── flow.py
+    ├── crew.py
+    ├── models.py
+    ├── config/
+    ├── utils/
+    └── sample_roadmaps.py
+```
+
+---
 
 ## Installation
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
-
-First, if you haven't already, install uv:
+Clone the repository
 
 ```bash
-pip install uv
+git clone https://github.com/<your-username>/the-roadmapper.git
 ```
 
-Next, navigate to your project directory and install the dependencies:
-
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
-
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/the_roadmapper/config/agents.yaml` to define your agents
-- Modify `src/the_roadmapper/config/tasks.yaml` to define your tasks
-- Modify `src/the_roadmapper/crew.py` to add your own logic, tools and specific args
-- Modify `src/the_roadmapper/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+Navigate into the project
 
 ```bash
-$ crewai run
+cd the-roadmapper
 ```
 
-This command initializes the The_roadmapper Crew, assembling the agents and assigning them tasks as defined in your configuration.
+Install dependencies
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+```bash
+uv sync
+```
 
-## Understanding Your Crew
+Run the application
 
-The The_roadmapper Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+```bash
+uv run streamlit run src/the_roadmapper/app.py
+```
 
-## Support
+---
 
-For support, questions, or feedback regarding the TheRoadmapper Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+## Environment Variables
 
-Let's create wonders together with the power and simplicity of crewAI.
+Create a `.env` file containing the required API keys.
+
+```env
+SAMBANOVA_API_KEY=
+GROQ_API_KEY=
+TAVILY_API_KEY=
+SERPER_API_KEY=
+OPENROUTER_API_KEY=
+GEMINI_API_KEY=
+NARAROUTER_API_KEY=
+OPENAI_BASE_URL=
+BLUESMIND_API_KEY=
+BLUESMIND_BASE_URL=
+GENERALCOMPUTE_API_KEY=
+GENERALCOMPUTE_BASE_URL=
+```
+
+---
+
+## Example Use Cases
+
+- Frontend Development
+- Backend Development
+- Full Stack Development
+- Mobile App Development
+- Machine Learning
+- AI Engineering
+- Cybersecurity
+- UI/UX Design
+- Video Editing
+- Digital Marketing
+- Cold Email Outreach
+- DevOps
+- Data Science
+
+---
+
+## Roadmap Structure
+
+Each generated roadmap contains:
+
+- Stage description
+- Estimated learning duration
+- Ordered learning concepts
+- Difficulty level
+- Priority level
+- Curated learning resources
+- Resource type classification
+
+---
+
+## License
+
+This project is licensed under the MIT License.
